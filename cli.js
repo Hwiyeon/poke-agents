@@ -251,6 +251,8 @@ function createMockDriver(state) {
 
     const roll = Math.random();
     if (roll < 0.25) {
+      const liveAgent = state.agents.get(target.agentId);
+      const lastToolName = liveAgent && liveAgent.lastTool ? liveAgent.lastTool : 'tool';
       state.applyEvent({
         type: EVENT_TYPES.TOOL_START,
         agentId: target.agentId,
@@ -261,7 +263,7 @@ function createMockDriver(state) {
         type: EVENT_TYPES.TOOL_END,
         agentId: target.agentId,
         ts: ts + 150,
-        meta: { ...baseMeta, toolName: state.agents.get(target.agentId)?.lastTool || 'tool' }
+        meta: { ...baseMeta, toolName: lastToolName }
       });
       return;
     }
