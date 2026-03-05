@@ -1,0 +1,12 @@
+{
+  "name": "claude-agent-pixel-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dependency-free local watcher + pixel dashboard for Claude Code transcript activity",
+  "main": "cli.js",
+  "scripts": {
+    "watch": "node cli.js watch",
+    "mock": "node cli.js mock"
+  },
+  "license": "MIT"
+}

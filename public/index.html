@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Claude Agent Pixel Dashboard</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="top-bar">
+        <div class="title-wrap">
+          <h1>Claude Agent Pixel Office</h1>
+          <p>Live local activity from Claude Code transcripts</p>
+        </div>
+        <div class="stats-wrap">
+          <div class="stat">
+            <span class="label">Active</span>
+            <span id="active-count" class="value">0</span>
+          </div>
+          <div class="stat">
+            <span class="label">Last Update</span>
+            <span id="last-update" class="value">-</span>
+          </div>
+          <label class="control">
+            <span>Project</span>
+            <select id="project-filter">
+              <option value="all">All</option>
+            </select>
+          </label>
+          <label class="control">
+            <span>Session</span>
+            <select id="session-filter">
+              <option value="all">All</option>
+            </select>
+          </label>
+        </div>
+      </header>
+
+      <main class="main-grid">
+        <aside class="side-panel">
+          <h2>Agents</h2>
+          <div id="agent-list" class="agent-list"></div>
+        </aside>
+        <section class="canvas-wrap">
+          <canvas id="office-canvas" aria-label="pixel office"></canvas>
+          <div class="legend">
+            <span><b>Idle</b></span>
+            <span><b>Thinking</b></span>
+            <span><b>Tool</b> ⚙</span>
+            <span><b>Output</b> ✍</span>
+            <span><b>Waiting</b> ⏳</span>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
