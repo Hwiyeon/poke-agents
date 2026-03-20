@@ -5,6 +5,7 @@ const fsp = fs.promises;
 const path = require('path');
 const os = require('os');
 const EventEmitter = require('events');
+const { StringDecoder } = require('string_decoder');
 const { normalizeLine } = require('./parser');
 
 const DEFAULT_SCAN_INTERVAL_MS = 2500;
@@ -173,6 +174,7 @@ class TranscriptWatcher extends EventEmitter {
       const state = {
         position: 0,
         leftover: '',
+        decoder: new StringDecoder('utf8'),
         reading: false,
         pending: false
       };
@@ -268,6 +270,7 @@ class TranscriptWatcher extends EventEmitter {
     if (stats.size < state.position) {
       state.position = 0;
       state.leftover = '';
+      state.decoder = new StringDecoder('utf8');
     }
 
     if (stats.size === state.position) {
@@ -299,7 +302,7 @@ class TranscriptWatcher extends EventEmitter {
 
       state.position = start + bytesReadTotal;
 
-      const text = state.leftover + buffer.subarray(0, bytesReadTotal).toString('utf8');
+      const text = state.leftover + state.decoder.write(buffer.subarray(0, bytesReadTotal));
       const lines = text.split(/\r?\n/);
       state.leftover = lines.pop() || '';
 

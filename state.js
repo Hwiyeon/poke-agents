@@ -36,7 +36,7 @@ class AgentState extends EventEmitter {
         name: agentId,
         projectId: meta.projectId || 'unknown-project',
         sessionId: meta.sessionId || 'unknown-session',
-        parentId: meta.parentId,
+        parentId: meta.parentId && meta.parentId !== agentId ? meta.parentId : undefined,
         childrenIds: new Set(),
         status: STATUS.THINKING,
         activity: 'Seen',
@@ -62,7 +62,7 @@ class AgentState extends EventEmitter {
     if (meta.sessionId) {
       agent.sessionId = meta.sessionId;
     }
-    if (meta.parentId) {
+    if (meta.parentId && meta.parentId !== agentId) {
       agent.parentId = meta.parentId;
     }
 
@@ -83,6 +83,20 @@ class AgentState extends EventEmitter {
     }
   }
 
+  ensureParentLink(parentId, childId, ts, meta = {}) {
+    if (!parentId || parentId === childId) {
+      return null;
+    }
+
+    const parentMeta = {
+      projectId: meta.projectId,
+      sessionId: meta.sessionId
+    };
+    const parent = this.agents.get(parentId) || this.upsertAgent(parentId, ts, parentMeta).agent;
+    parent.childrenIds.add(childId);
+    return parent;
+  }
+
   applyEvent(event) {
     if (!event || !event.agentId || !event.type) {
       return;
@@ -93,13 +107,15 @@ class AgentState extends EventEmitter {
     const { agent, created } = this.upsertAgent(event.agentId, ts, meta);
     const previousStatus = agent.status;
 
-    agent.counters.seen += 1;
+    if (event.type === EVENT_TYPES.AGENT_SEEN) {
+      agent.counters.seen += 1;
+    }
 
     if (created && agent.parentId) {
-      const parent = this.agents.get(agent.parentId);
-      if (parent) {
-        parent.childrenIds.add(agent.agentId);
-      }
+      this.ensureParentLink(agent.parentId, agent.agentId, ts, meta);
+    }
+
+    if (created && agent.parentId && event.type !== EVENT_TYPES.SUBAGENT_SPAWN) {
       const inferredSpawn = {
         type: EVENT_TYPES.SUBAGENT_SPAWN,
         agentId: agent.agentId,
@@ -145,8 +161,7 @@ class AgentState extends EventEmitter {
       case EVENT_TYPES.SUBAGENT_SPAWN: {
         const parentId = meta.parentId;
         if (parentId) {
-          const parent = this.agents.get(parentId) || this.upsertAgent(parentId, ts, meta).agent;
-          parent.childrenIds.add(agent.agentId);
+          this.ensureParentLink(parentId, agent.agentId, ts, meta);
           agent.parentId = parentId;
         }
         agent.status = STATUS.THINKING;

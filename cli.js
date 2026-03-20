@@ -20,6 +20,19 @@ const DEFAULTS = {
   enablePokeapiSprites: false
 };
 
+function expandHome(rawPath) {
+  if (typeof rawPath !== 'string' || rawPath.length === 0) {
+    return rawPath;
+  }
+  if (rawPath === '~') {
+    return os.homedir();
+  }
+  if (rawPath.startsWith(`~${path.sep}`)) {
+    return path.join(os.homedir(), rawPath.slice(2));
+  }
+  return rawPath;
+}
+
 function parseBoolean(rawValue, fallback) {
   if (rawValue === undefined || rawValue === null) {
     return fallback;
@@ -47,6 +60,10 @@ function parseArgv(argv) {
 
   for (let i = 0; i < argv.length; i += 1) {
     const token = argv[i];
+    if (token === '-h' || token === '--help') {
+      out.help = true;
+      continue;
+    }
     if (!token.startsWith('--')) {
       out._.push(token);
       continue;
@@ -101,7 +118,7 @@ function loadConfigFile(filePath) {
 
 function resolveConfig(argv) {
   const argMap = parseArgv(argv);
-  const command = argMap._[0] || 'watch';
+  const command = argMap.help ? 'help' : argMap._[0] || 'watch';
   const configFile = argMap.config || path.join(process.cwd(), 'config.json');
 
   const fileConfig = loadConfigFile(configFile);
@@ -136,7 +153,7 @@ function resolveConfig(argv) {
     config: {
       port: parseNumber(merged.port, DEFAULTS.port),
       host: merged.host || DEFAULTS.host,
-      claudeProjectsPath: path.resolve(merged.claudeProjectsPath || DEFAULTS.claudeProjectsPath),
+      claudeProjectsPath: path.resolve(expandHome(merged.claudeProjectsPath || DEFAULTS.claudeProjectsPath)),
       activeTimeoutSec: parseNumber(merged.activeTimeoutSec, DEFAULTS.activeTimeoutSec),
       staleTimeoutSec: parseNumber(merged.staleTimeoutSec, DEFAULTS.staleTimeoutSec),
       enablePokeapiSprites: parseBoolean(merged.enablePokeapiSprites, DEFAULTS.enablePokeapiSprites)
@@ -251,19 +268,18 @@ function createMockDriver(state) {
 
     const roll = Math.random();
     if (roll < 0.25) {
-      const liveAgent = state.agents.get(target.agentId);
-      const lastToolName = liveAgent && liveAgent.lastTool ? liveAgent.lastTool : 'tool';
+      const toolName = ['bash', 'read_file', 'search', 'edit'][Math.floor(Math.random() * 4)];
       state.applyEvent({
         type: EVENT_TYPES.TOOL_START,
         agentId: target.agentId,
         ts,
-        meta: { ...baseMeta, toolName: ['bash', 'read_file', 'search', 'edit'][Math.floor(Math.random() * 4)] }
+        meta: { ...baseMeta, toolName }
       });
       state.applyEvent({
         type: EVENT_TYPES.TOOL_END,
         agentId: target.agentId,
         ts: ts + 150,
-        meta: { ...baseMeta, toolName: lastToolName }
+        meta: { ...baseMeta, toolName }
       });
       return;
     }

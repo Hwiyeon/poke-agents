@@ -195,11 +195,16 @@ function normalizeEntry(entry, context) {
   ]);
 
   const parentId = parentIdValue ? String(parentIdValue) : undefined;
+  const spawn = explicitSpawnInfo(entry);
+  const fallbackAgentId =
+    sessionId && sessionId !== 'unknown-session'
+      ? `${sessionId}:main`
+      : stableFallbackId(context.filePath, sessionId, projectId);
   const agentId = explicitAgentId
     ? String(explicitAgentId)
-    : parentId
-      ? `${sessionId}:${Math.abs(crypto.createHash('md5').update(JSON.stringify(entry)).digest().readUInt32BE(0)).toString(36)}`
-      : `${sessionId}:main`;
+    : spawn && spawn.childId
+      ? spawn.childId
+      : fallbackAgentId;
 
   const baseMeta = {
     projectId,
@@ -282,7 +287,6 @@ function normalizeEntry(entry, context) {
     });
   }
 
-  const spawn = explicitSpawnInfo(entry);
   if (spawn) {
     const childId = spawn.childId || agentId;
     events.push({

@@ -39,6 +39,38 @@ node cli.js mock  [--port 8787] [--pokeapi]
 node cli.js help
 ```
 
+## Testing
+
+Automated regression tests:
+
+```bash
+node --test
+```
+
+This runs the built-in regression suite for parser, watcher, and state logic, including Claude Code-style transcript cases.
+
+Manual Claude Code smoke test:
+
+1. Start the dashboard:
+
+```bash
+node cli.js watch
+```
+
+2. Open `http://127.0.0.1:8787`.
+3. In another terminal, from a repo you trust, run a real Claude Code prompt that should read local files:
+
+```bash
+claude -p --allowedTools Read "Read README.md and package.json, then summarize this project in two sentences."
+```
+
+Expected result:
+
+- A transcript file is updated under `~/.claude/projects`
+- The dashboard shows live tool/output activity
+
+For this smoke test, do not use `--no-session-persistence`, since the watcher relies on Claude's saved transcript files.
+
 ## Configuration
 
 Config precedence:
